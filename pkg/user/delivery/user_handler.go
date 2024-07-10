@@ -51,6 +51,7 @@ func (u *UserHandler) LoginUserHandler(c *gin.Context) {
 		"username": user.UserName,
 		"name":     user.Name,
 		"email":    user.Email,
+		"phone": user.Phone,
 	}})
 }
 

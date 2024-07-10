@@ -123,7 +123,7 @@ func TestLoginUserHandler(t *testing.T) {
     assert.Equal(t, http.StatusOK, w.Code)
 
     // Define the expected JSON response
-    expectedResponse := `{"Status":"Success","user":{"username":"ratheeshgk","name":"Ratheesh G","email":"ratheeshgk@live1.com"}}`
+    expectedResponse := `{"Status":"Success","user":{"username":"ratheeshgk","name":"Ratheesh G","email":"ratheeshgk@live1.com","phone":"9961429911"}}`
     assert.JSONEq(t, expectedResponse, w.Body.String())
 }
 
