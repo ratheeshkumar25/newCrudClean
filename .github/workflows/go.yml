@@ -33,7 +33,7 @@ jobs:
     
     - name: Find and stop existing process
       run: |
-        PID=$(pgrep -f "make run")
+        PID=$(pgrep -f "make run" || true)
         if [ -n "$PID" ]; then
           echo "Stopping existing process with PID $PID"
           kill $PID
@@ -44,3 +44,4 @@ jobs:
     
     - name: Start new Process in the background
       run: nohup make run & disown
+
