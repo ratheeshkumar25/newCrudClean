@@ -2,29 +2,43 @@ package database
 
 import (
 	"fmt"
+	"log"
+	"os"
 
+	"github.com/joho/godotenv"
 	user "github.com/ratheeshkumar25/pkg/user/entity"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 func ConnectDatabase() *gorm.DB {
-	host := "localhost"
-	userr := "postgres"
-	password := "revathy25"
-	dbname := "newusers"
-	port := "5432"
-	sslmode := "disable"
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s", host, userr, password, dbname, port, sslmode)
+ 
+// Attempt to load .env file, but don't fail if it's not found
+_ = godotenv.Load()
 
-	var err error
+// Retrieve DSN from environment variables
+dsn := os.Getenv("DSN")
+if dsn == "" {
+	log.Fatal("DSN environment variable not set")
+}
 
-	DB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+// Debug print to check if DSN is correctly loaded
+fmt.Println("DSN:", dsn)
 
-	if err != nil {
-		fmt.Println("Connection to the database failed:", err)
-	}
-	DB.AutoMigrate(user.UserRegister{})
-	return DB
+// Open a connection to the database
+DB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+if err != nil {
+	log.Fatalf("Connection to the database failed: %v", err)
+}
+
+DB.AutoMigrate(&user.UserRegister{})
+return DB
 
 }
+
+// func getEnv(key,fallback string)string{
+// 	if value,exists := os.LookupEnv(key);exists{
+// 		return value
+// 	}
+// 	return fallback
+// }
