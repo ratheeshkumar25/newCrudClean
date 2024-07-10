@@ -28,7 +28,7 @@ jobs:
       run: go test -v ./...
 
     - name: env file building
-      run: echo -e "${{ secrets.GOLIB_SECRET_FILE }}" > .env
+      run: echo -e "${{ secrets.PRO_ENV_FILE }}" > .env
 
         - name: Find and stop existing process
       run: |
