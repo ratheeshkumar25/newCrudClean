@@ -13,7 +13,7 @@ import (
 
 func ConnectDatabase() *gorm.DB {
  
-// Attempt to load .env file, but don't fail if it's not found
+// Attempt to load .env file, for connecting DB
 _ = godotenv.Load()
 
 // Retrieve DSN from environment variables
