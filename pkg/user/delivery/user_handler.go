@@ -31,7 +31,7 @@ func (u *UserHandler) RegisterUserHandler(c *gin.Context) {
 		c.JSON(500, gin.H{"Error": "user already exists"})
 		return
 	}
-	c.JSON(200, gin.H{"Status": "User registration done successfully"})
+	c.JSON(201, gin.H{"Status": "User registration done successfully"})
 }
 
 func (u *UserHandler) LoginUserHandler(c *gin.Context) {

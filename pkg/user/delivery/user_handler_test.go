@@ -78,7 +78,7 @@ func TestRegisterUserHandler(t *testing.T){
     r.ServeHTTP(w, req)
 
 	// Check the response status code
-    assert.Equal(t, http.StatusOK, w.Code)
+    assert.Equal(t, http.StatusCreated, w.Code)
 
 	 // Define the expected JSON response
     assert.JSONEq(t, `{"Status":"User registration done successfully"}`, w.Body.String())

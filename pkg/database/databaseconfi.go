@@ -31,7 +31,7 @@ if err != nil {
 	log.Fatalf("Connection to the database failed: %v", err)
 }
 
-DB.AutoMigrate(&user.UserRegister{})
+DB.AutoMigrate(&user.UserRegister{},&user.AdminRegister{},&user.Product{})
 return DB
 
 }
