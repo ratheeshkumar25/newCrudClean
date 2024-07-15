@@ -3,6 +3,9 @@
 
 name: Go CI/CD
 
+env:
+  GIN_MODE: release
+
 on:
   push:
     branches: [ "main" ]
