@@ -44,4 +44,3 @@ jobs:
     
     - name: Start new Process in the background
       run: nohup make run & disown
-
