@@ -21,7 +21,6 @@ type AdminUseCases interface {
 	GetProductHandler(c *gin.Context)
 	UpdateProductHandler(c *gin.Context)
 	DeletProductHandler(c *gin.Context)
-
 }
 
 func (a *AdminHandler) RegisterAdminHandler(c *gin.Context) {
@@ -50,7 +49,7 @@ func (a *AdminHandler) LoginAdminHandler(c *gin.Context) {
 
 	admin, err := a.adminUseCase.Login(&adminLogin)
 	if err != nil {
-		c.JSON(500, gin.H{"Error": err.Error()})
+		c.JSON(500, gin.H{"Error": "Wrong UserName and Password"})
 		return
 	}
 
@@ -72,15 +71,19 @@ func (a *AdminHandler) GetUserListHandler(c *gin.Context) {
 
 func (a *AdminHandler) AddProductHandler(c *gin.Context) {
 	var product user.Product
+
 	if err := c.ShouldBindJSON(&product); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{"error": "Invalid request payload"})
 		return
 	}
+
 	if err := a.adminUseCase.AddProduct(&product); err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		c.JSON(500, gin.H{"error": "Failed to add product"})
 		return
 	}
-	c.JSON(201, gin.H{"message": "product added successfully"})
+
+	c.JSON(201, gin.H{"message": "Product added successfully"})
+
 }
 
 func (a *AdminHandler) GetProductHandler(c *gin.Context) {
@@ -92,26 +95,6 @@ func (a *AdminHandler) GetProductHandler(c *gin.Context) {
 	}
 	c.JSON(200, products)
 }
-
-
-// func (a *AdminHandler) UpdateProductHandler(c *gin.Context) {
-// 	var product user.Product
-// 	if err := c.ShouldBindJSON(&product); err != nil {
-// 		c.JSON(400, gin.H{"error": err.Error()})
-// 		return
-// 	}
-// 	if err := a.adminUseCase.UpdateProduct(&product); err != nil {
-// 		c.JSON(500, gin.H{"error": err.Error()})
-// 		return
-// 	}
-// 	// Fetch the updated product details
-// 	updatedProduct, err := a.adminUseCase.FindProduct(product.ID)
-// 	if err != nil {
-// 		c.JSON(500, gin.H{"error": err.Error()})
-// 		return
-// 	}
-// 	c.JSON(200, updatedProduct)
-// }
 
 func (h *AdminHandler) UpdateProductHandler(c *gin.Context) {
 	var product user.Product
@@ -141,10 +124,9 @@ func (h *AdminHandler) UpdateProductHandler(c *gin.Context) {
 	c.JSON(200, existingProduct)
 }
 
-
 func (a *AdminHandler) DeletProductHandler(c *gin.Context) {
 	idStr := c.Param("id")
-	log.Printf("Executing query with id %s",idStr)
+	log.Printf("Executing query with id %s", idStr)
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		c.JSON(400, gin.H{"error": "Invalid product ID"})
@@ -156,7 +138,6 @@ func (a *AdminHandler) DeletProductHandler(c *gin.Context) {
 	}
 	c.JSON(200, gin.H{"message": "product deleted successfully"})
 }
-
 
 func NewAdminHandler(adminUseCase usecase.AdminUseCase) *AdminHandler {
 	return &AdminHandler{adminUseCase: adminUseCase}

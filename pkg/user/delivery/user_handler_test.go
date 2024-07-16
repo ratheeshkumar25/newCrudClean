@@ -56,7 +56,6 @@ func TestRegisterUserHandler(t *testing.T){
     r := gin.Default()
     r.POST("/signup", handler.RegisterUserHandler)
     
-	  // Mock user signup data
     user := user.UserRegister{
         UserName: "ratheeshgk",
         Name:     "Ratheesh G",
@@ -65,7 +64,7 @@ func TestRegisterUserHandler(t *testing.T){
         Password: "rathee@123",
     }
 
-	// Setup the mock to return the expected user data
+	
     mockUseCase.On("RegisterUser", &user).Return(nil)
 
 	// Create the request
@@ -80,8 +79,10 @@ func TestRegisterUserHandler(t *testing.T){
 	// Check the response status code
     assert.Equal(t, http.StatusCreated, w.Code)
 
-	 // Define the expected JSON response
+	 // Define the expected JSON response 
     assert.JSONEq(t, `{"Status":"User registration done successfully"}`, w.Body.String())
+
+
 
 }
 

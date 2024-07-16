@@ -3,6 +3,7 @@ package delivery
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -59,68 +60,88 @@ func (m *MockAdminUseCase) DeleteProduct(id int) error {
 	return args.Error(0)
 }
 
+
 func TestRegisterAdminHandler(t *testing.T) {
-	mockUseCase := new(MockAdminUseCase)
-	handler := NewAdminHandler(mockUseCase)
+    mockUseCase := new(MockAdminUseCase)
+    handler := NewAdminHandler(mockUseCase)
 
-	admin := &user.AdminRegister{
-		Username: "admin1",
-		Password: "password123",
-		Email:    "admin1@example.com",
-	}
-	mockUseCase.On("RegisterAdmin", admin).Return(nil)
+    router := gin.Default()
+    router.POST("/adminsignup", handler.RegisterAdminHandler)
 
-	router := gin.Default()
-	router.POST("/adminsignup", handler.RegisterAdminHandler)
+    admin := &user.AdminRegister{
+        Username: "admin1",
+        Password: "password123",
+        Email:    "admin1@example.com",
+    }
 
-	body, _ := json.Marshal(admin)
-	req, _ := http.NewRequest("POST", "/adminsignup", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
+    // Successful registration setup
+    mockUseCase.On("RegisterAdmin", admin).Return(nil)
 
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+    body, _ := json.Marshal(admin)
+    req, _ := http.NewRequest("POST", "/adminsignup", bytes.NewBuffer(body))
+    req.Header.Set("Content-Type", "application/json")
 
-	assert.Equal(t, http.StatusCreated, w.Code)
-	assert.JSONEq(t, `{"Status":"Admin registration done successfully"}`, w.Body.String())
+    w := httptest.NewRecorder()
+    router.ServeHTTP(w, req)
+
+    assert.Equal(t, http.StatusCreated, w.Code)
+    assert.JSONEq(t, `{"Status":"Admin registration done successfully"}`, w.Body.String())
+
+   // Error case setup
+   mockUseCase.ExpectedCalls = nil //***** Clear previous expectations
+   mockUseCase.On("RegisterAdmin", admin).Return(errors.New("admin already register"))
+
+   body, _ = json.Marshal(admin)
+   req, _ = http.NewRequest("POST", "/adminsignup", bytes.NewBuffer(body))
+   req.Header.Set("Content-Type", "application/json")
+
+   w = httptest.NewRecorder()
+   router.ServeHTTP(w, req)
+
+   assert.Equal(t, http.StatusInternalServerError, w.Code)
+   assert.JSONEq(t, `{"Error":"admin already register"}`, w.Body.String())
 }
 
 func TestLoginAdminHandler(t *testing.T) {
-	mockUseCase := new(MockAdminUseCase)
-	handler := NewAdminHandler(mockUseCase)
+    mockUseCase := new(MockAdminUseCase)
+    handler := NewAdminHandler(mockUseCase)
 
-	adminLogin := &user.AdminLogin{
-		Username: "admin1",
-		Password: "password123",
-	}
-	admin := &user.AdminRegister{
-		Username: "admin1",
-		Email:    "admin1@example.com",
-	}
-	mockUseCase.On("Login", adminLogin).Return(admin, nil)
+    router := gin.Default()
+    router.POST("/adminlogin", handler.LoginAdminHandler)
 
-	router := gin.Default()
-	router.POST("/adminlogin", handler.LoginAdminHandler)
+    adminLogin := &user.AdminLogin{
+        Username: "admin1",
+        Password: "password123",
+    }
 
-	body, _ := json.Marshal(adminLogin)
-	req, _ := http.NewRequest("POST", "/adminlogin", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
+    admin := &user.AdminRegister{
+        Username: "admin1",
+        Email:    "admin1@example.com",
+    }
 
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+    // Successful login setup
+    mockUseCase.On("Login", adminLogin).Return(admin, nil)
 
-	expectedResponse := gin.H{"Status": "Success", "admin": gin.H{
-		"username": admin.Username,
-		"name":     admin.Email,
-	}}
-	responseBody, _ := json.Marshal(expectedResponse)
+    body, _ := json.Marshal(adminLogin)
+    req, _ := http.NewRequest("POST", "/adminlogin", bytes.NewBuffer(body))
+    req.Header.Set("Content-Type", "application/json")
 
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.JSONEq(t, string(responseBody), w.Body.String())
+    w := httptest.NewRecorder()
+    router.ServeHTTP(w, req)
+
+    assert.Equal(t, http.StatusOK, w.Code)
+    assert.JSONEq(t, `{"Status":"Success", "admin":{"username":"admin1", "name":"admin1@example.com"}}`, w.Body.String())
+
+
 }
+
 
 func TestAddProductHandler(t *testing.T) {
 	mockUseCase := new(MockAdminUseCase)
 	handler := NewAdminHandler(mockUseCase)
+
+	router := gin.Default()
+	router.POST("/addproduct", handler.AddProductHandler)
 
 	product := &user.Product{
 		ProductName: "Product1",
@@ -128,8 +149,6 @@ func TestAddProductHandler(t *testing.T) {
 	}
 	mockUseCase.On("AddProduct", product).Return(nil)
 
-	router := gin.Default()
-	router.POST("/addproduct", handler.AddProductHandler)
 
 	body, _ := json.Marshal(product)
 	req, _ := http.NewRequest("POST", "/addproduct", bytes.NewBuffer(body))
@@ -139,22 +158,36 @@ func TestAddProductHandler(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code)
-	assert.JSONEq(t, `{"message":"product added successfully"}`, w.Body.String())
+	assert.JSONEq(t, `{"message":"Product added successfully"}`, w.Body.String())
+
+	// Error case setup
+    mockUseCase.ExpectedCalls = nil  // **Clear previous expectations
+    mockUseCase.On("AddProduct", product).Return(errors.New("database error"))
+
+    body, _ = json.Marshal(product)
+    req, _ = http.NewRequest("POST", "/addproduct", bytes.NewBuffer(body))
+    req.Header.Set("Content-Type", "application/json")
+
+    w = httptest.NewRecorder()
+    router.ServeHTTP(w, req)
+
+    assert.Equal(t, http.StatusInternalServerError, w.Code)
+    assert.JSONEq(t, `{"error":"Failed to add product"}`, w.Body.String())
 }
 
 func TestGetProductHandler(t *testing.T) {
 	mockUseCase := new(MockAdminUseCase)
 	handler := NewAdminHandler(mockUseCase)
-
+    
+	router := gin.Default()
+	router.GET("/getproduct", handler.GetProductHandler)
+	
 	productName := "Product1"
 	products := &[]user.Product{
 		{ProductName: "Product1", Price: 18.30},
 		{ProductName: "Product2", Price: 20.50},
 	}
 	mockUseCase.On("GetProducts", productName).Return(products, nil)
-
-	router := gin.Default()
-	router.GET("/getproduct", handler.GetProductHandler)
 
 	req, _ := http.NewRequest("GET", "/getproduct", nil)
 	q := req.URL.Query()
@@ -173,6 +206,10 @@ func TestGetProductHandler(t *testing.T) {
 func TestUpdateProductHandler(t *testing.T) {
 	mockUseCase := new(MockAdminUseCase)
 	handler := NewAdminHandler(mockUseCase)
+
+	//Setpup the new gin router 
+	router := gin.Default()
+	router.PUT("/productupdate", handler.UpdateProductHandler)
 
 	// Original product details
 	product := &user.Product{
@@ -204,8 +241,7 @@ func TestUpdateProductHandler(t *testing.T) {
 			p.CategoryID == updatedProduct.CategoryID
 	})).Return(nil)
 
-	router := gin.Default()
-	router.PUT("/productupdate", handler.UpdateProductHandler)
+
 
 	body, _ := json.Marshal(updatedProduct)
 	req, _ := http.NewRequest("PUT", "/productupdate", bytes.NewBuffer(body))
@@ -222,18 +258,20 @@ func TestUpdateProductHandler(t *testing.T) {
 	assert.JSONEq(t, string(expectedResponse), w.Body.String())
 }
 
-func TestDeleteProductHandler(t *testing.T) { // corrected function name
+func TestDeleteProductHandler(t *testing.T) { 
 	mockUseCase := new(MockAdminUseCase)
 	handler := NewAdminHandler(mockUseCase)
+
+
+	router := gin.Default()
+	router.DELETE("/productdelete/:id",handler.DeletProductHandler)
 
 	productId := 1
 	mockUseCase.On("DeleteProduct", productId).Return(nil)
 
-	router := gin.Default()
-	router.DELETE("/productdelete/:id",handler.DeletProductHandler)
-	 // corrected endpoint name
 
-	req, _ := http.NewRequest("DELETE", "/productdelete/1", nil) // corrected endpoint name
+
+	req, _ := http.NewRequest("DELETE", "/productdelete/1", nil) 
 
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
